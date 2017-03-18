@@ -1,1 +1,3 @@
-export { default } from './searcher.js';
+import Searcher from './searcher.js';
+
+module.exports = Searcher;
