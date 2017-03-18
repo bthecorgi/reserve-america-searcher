@@ -1,3 +1,3 @@
-import Searcher from './searcher.js';
+import Searcher from './searcher';
 
 module.exports = Searcher;
