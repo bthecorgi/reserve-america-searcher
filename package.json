@@ -4,7 +4,7 @@
   "description": "",
   "main": "lib/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "mocha --compilers js:babel-core/register ./test/**/*.spec.js",
     "prepublish": "node_modules/babel-cli/bin/babel.js src --out-dir lib"
   },
   "author": "",
@@ -30,11 +30,7 @@
     "eslint-config-standard": "^6.2.1",
     "eslint-plugin-import": "^2.2.0",
     "eslint-plugin-promise": "^3.4.1",
-    "eslint-plugin-standard": "^2.0.1"
-  },
-  "babel": {
-    "presets": [
-      "es2015"
-    ]
+    "eslint-plugin-standard": "^2.0.1",
+    "mocha": "^3.2.0"
   }
 }
