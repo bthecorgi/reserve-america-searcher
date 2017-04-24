@@ -17,6 +17,12 @@ export default class Searcher {
         this.loop = loop;
         this.loops = loops;
         this.lookingFor = lookingFor;
+
+        this.onDoneHandler = () => {};
+    }
+
+    setOnDoneHandler(onDoneHandler) {
+        this.onDoneHandler = onDoneHandler;
     }
 
     searchLoop(campingDate, loop) {
@@ -42,17 +48,17 @@ export default class Searcher {
             const j = request.jar();
             // NOTE: extra request to get cookie
             request({ url: this.url, jar: j }, () => {
+                let wasFound = false;
                 winston.log('info', 'get: ', this.url);
                 request.post({ url: this.url, form: formData, jar: j }, (error, response, body) => {
                     winston.log('info', 'post: ', this.url);
-                    // winston.log('info', body);
                     const $ = cheerio.load(body);
 
                     const matchSummary = $('#colbody1 > .searchSummary .matchSummary');
                     winston.log('debug', 'Match found: ', matchSummary.length);
 
                     if (matchSummary.length > 1 || matchSummary.length === 0) {
-                        throw new Error('Unexpected number of summary.  HTML might have changed');
+                        throw new Error(`Unexpected number of summary.  HTML might have changed: ${campingDate}`);
                     }
                     const summary = matchSummary.text();
                     winston.log('info', matchSummary.text());
@@ -73,24 +79,33 @@ export default class Searcher {
 
                         winston.log('info', `bookNowUrls: ${bookNowUrls.length}`);
                         winston.log('info', 'FOUND');
-                        resolve(summary, formData, this.url, bookNowUrls);
+                        wasFound = true;
+                        resolve({ wasFound, summary, formData, url: this.url, bookNowUrls });
                     }
 
                     winston.log('info', 'Script done: ', new Date());
+                    this.onDoneHandler();
+                    resolve({ wasFound });
                 });
             });
         });
+    }
+
+    static notifyNotifier(notifier, { wasFound, summary, formData, url, bookNowUrls }) {
+        if (wasFound) {
+            notifier(summary, formData, url, bookNowUrls);
+        }
     }
 
     searchAllLoops(campingDate, notifier) {
         if (this.loops) {
             this.loops.forEach((loop) => {
                 this.searchLoop(campingDate, loop)
-                    .then(notifier);
+                    .then(resolved => Searcher.notifyNotifier(notifier, resolved));
             });
         } else {
             this.searchLoop(campingDate, this.loop)
-                .then(notifier);
+                .then(resolved => Searcher.notifyNotifier(notifier, resolved));
         }
     }
 
@@ -101,6 +116,18 @@ export default class Searcher {
             });
         } else {
             this.searchAllLoops(this.campingDate, notifier);
+        }
+    }
+
+    /**
+     * Search in series
+     */
+    async searchAllDatesAndLoopsInSeries(notifier) {
+        for (const campingDate of this.campingDates) { // eslint-disable-line no-restricted-syntax
+            for (const loop of this.loops) { // eslint-disable-line no-restricted-syntax
+                const resolved = await this.searchLoop(campingDate, loop); // eslint-disable-line
+                Searcher.notifyNotifier(notifier, resolved);
+            }
         }
     }
 

@@ -5,5 +5,9 @@ module.exports = {
     ],
     "rules": {
         "indent": ["error", 4]
+    },
+    "env": {
+      "node": true,
+      "mocha": true
     }
 };
