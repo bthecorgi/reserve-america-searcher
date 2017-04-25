@@ -25,7 +25,7 @@ describe('searcher', () => {
         searcher.searchallDates();
     });
 
-    it('should complete run for an old date', (done) => {
+    it('should error on run for an old date', () => {
         const url = 'https://www.reserveamerica.com/camping/pinnacles-campground/r/campgroundDetails.do?contractCode=NRSO&parkId=73984';
         const contractCode = 'NRSO';
         const parkId = '73984';
@@ -39,12 +39,7 @@ describe('searcher', () => {
         const searcher = new Searcher(url, contractCode, parkId, null, campingDates,
             lengthOfStay, null, loops, lookingFor);
 
-        searcher.setOnDoneHandler(() => {
-            assert.ok(true);
-            done();
-        });
-
-        searcher.searchallDates();
+        assert.throws(searcher.searchallDates);
     });
 
     it('should be ok running multiple dates', (done) => {
